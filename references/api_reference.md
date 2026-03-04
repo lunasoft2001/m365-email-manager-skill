@@ -1,45 +1,45 @@
 # Microsoft Graph Mail API Reference
 
-## Contexto
+## Context
 
-Este skill opera sobre Microsoft Graph `v1.0` para correo Exchange Online.
+This skill operates on Microsoft Graph `v1.0` for Exchange Online email.
 
-Cuenta objetivo:
+Target account:
 
-- Configurable vía `M365_USER` (variable de entorno) o `--user` (argumento CLI)
+- Configurable via `M365_USER` (environment variable) or `--user` (CLI argument)
 
 Base URL:
 
 - `https://graph.microsoft.com/v1.0`
 
-## Permisos mínimos sugeridos
+## Minimum suggested permissions
 
-Para flujo delegado (usuario autenticado):
+For delegated flow (authenticated user):
 
-- `Mail.Read` para listar/buscar correos.
-- `Mail.ReadWrite` para marcar como leído.
-- `Mail.Send` para enviar correos.
+- `Mail.Read` to list/search emails.
+- `Mail.ReadWrite` to mark as read and move messages.
+- `Mail.Send` to send emails.
 
-## Endpoints usados por el script
+## Endpoints used by the script
 
-### Listar mensajes de Inbox
+### List inbox messages
 
 - `GET /users/{user}/mailFolders/inbox/messages`
-- Query típica:
+- Typical query:
 
   - `$select=id,subject,from,receivedDateTime,isRead`
   - `$orderby=receivedDateTime desc`
   - `$top=<N>`
-  - `$filter=isRead eq false` (opcional)
+  - `$filter=isRead eq false` (optional)
 
-### Buscar mensajes
+### Search messages
 
-- `GET /users/{user}/messages?$search="texto"`
-- Header requerido:
+- `GET /users/{user}/messages?$search="text"`
+- Required header:
 
   - `ConsistencyLevel: eventual`
 
-### Marcar como leído
+### Mark as read
 
 - `PATCH /users/{user}/messages/{messageId}`
 - Body:
@@ -50,23 +50,23 @@ Para flujo delegado (usuario autenticado):
 }
 ```
 
-### Enviar correo
+### Send email
 
 - `POST /users/{user}/sendMail`
-- Body mínimo:
+- Minimum body:
 
 ```json
 {
   "message": {
-    "subject": "Asunto",
+    "subject": "Subject",
     "body": {
       "contentType": "Text",
-      "content": "Mensaje"
+      "content": "Message"
     },
     "toRecipients": [
       {
         "emailAddress": {
-          "address": "destino@empresa.com"
+          "address": "recipient@company.com"
         }
       }
     ]
@@ -75,7 +75,7 @@ Para flujo delegado (usuario autenticado):
 }
 ```
 
-### Mover mensaje
+### Move message
 
 - `POST /users/{user}/messages/{messageId}/move`
 - Body:
@@ -86,15 +86,15 @@ Para flujo delegado (usuario autenticado):
 }
 ```
 
-IDs de carpetas comunes:
+Common folder IDs:
 - `inbox`
 - `drafts`
-- `sentitems` (enviados)
-- `deleteditems` (papelera)
+- `sentitems` (sent)
+- `deleteditems` (trash)
 - `junkemail` (spam)
 - `archive`
 
-### Responder a mensaje
+### Reply to message
 
 - `POST /users/{user}/messages/{messageId}/reply`
 - Body:
@@ -104,12 +104,12 @@ IDs de carpetas comunes:
   "message": {
     "body": {
       "contentType": "Text",
-      "content": "Respuesta al mensaje..."
+      "content": "Reply to message..."
     },
     "ccRecipients": [
       {
         "emailAddress": {
-          "address": "cc@empresa.com"
+          "address": "cc@company.com"
         }
       }
     ]
@@ -117,21 +117,21 @@ IDs de carpetas comunes:
 }
 ```
 
-## Manejo de token
+## Token handling
 
-Orden recomendado:
+Recommended order:
 
-1. Reutilizar `GRAPH_ACCESS_TOKEN` si existe.
-2. Si no existe, obtener token con Azure CLI para recurso Graph.
+1. Reuse `GRAPH_ACCESS_TOKEN` if it exists.
+2. If not available, obtain token with Azure CLI for Graph resource.
 
-Comando:
+Command:
 
 ```bash
 az account get-access-token --resource-type ms-graph --query accessToken -o tsv
 ```
 
-## Errores comunes
+## Common errors
 
-- `401/403`: falta login, token expirado o permisos insuficientes.
-- `404` en mensaje: `messageId` inválido o correo fuera de alcance.
-- `429`: throttling; reintentar con backoff.
+- `401/403`: missing login, expired token or insufficient permissions.
+- `404` on message: invalid `messageId` or email out of scope.
+- `429`: throttling; retry with backoff.

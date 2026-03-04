@@ -1,31 +1,33 @@
 # M365 Email Manager Skill
 
-> GitHub Copilot Skill para gestionar correo de Microsoft 365 (Outlook/Exchange Online) usando Microsoft Graph API
+> GitHub Copilot Skill for managing Microsoft 365 (Outlook/Exchange Online) email using Microsoft Graph API
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 📋 Descripción
+**[🇪🇸 Versión en Español](README.es.md)**
 
-Este skill permite a GitHub Copilot automatizar operaciones de correo en Microsoft 365 de forma reproducible y segura, sin guardar credenciales en archivos del repositorio.
+## 📋 Description
 
-### Operaciones soportadas
+This skill allows GitHub Copilot to automate email operations in Microsoft 365 in a reproducible and secure way, without storing credentials in repository files.
 
-- ✉️ **Listar correos** recientes o no leídos
-- 🔍 **Buscar mensajes** por texto
-- ✅ **Marcar como leído**
-- 📤 **Enviar correos**
-- 📁 **Mover mensajes** entre carpetas
-- 💬 **Responder** a correos (con ReplyAll)
+### Supported operations
 
-## 🚀 Instalación rápida
+- ✉️ **List emails** recent or unread
+- 🔍 **Search messages** by text
+- ✅ **Mark as read**
+- 📤 **Send emails**
+- 📁 **Move messages** between folders
+- 💬 **Reply** to emails (with ReplyAll)
 
-### Requisitos previos
+## 🚀 Quick Installation
 
-- **Microsoft 365** con buzón de correo activo
-- **Azure CLI** para autenticación
-- **Python 3.7+** (sin dependencias externas)
+### Prerequisites
 
-### Instalación de Azure CLI
+- **Microsoft 365** with active email mailbox
+- **Azure CLI** for authentication
+- **Python 3.7+** (no external dependencies)
+
+### Azure CLI Installation
 
 ```bash
 # macOS
@@ -38,60 +40,60 @@ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 winget install Microsoft.AzureCLI
 ```
 
-### Configuración
+### Configuration
 
-1. **Autenticarse con Azure CLI**:
+1. **Authenticate with Azure CLI**:
    ```bash
    az login
    ```
 
-2. **Configurar la cuenta de correo**:
+2. **Configure email account**:
    ```bash
-   export M365_USER="tu-usuario@empresa.onmicrosoft.com"
+   export M365_USER="your-user@company.onmicrosoft.com"
    ```
 
-3. **Probar el skill**:
+3. **Test the skill**:
    ```bash
    python3 scripts/m365_mail.py list --top 5
    ```
 
-## 📖 Uso
+## 📖 Usage
 
-### Listar correos
+### List emails
 
 ```bash
-# Últimos 10 correos
+# Last 10 emails
 python3 scripts/m365_mail.py list
 
-# Solo no leídos
+# Only unread
 python3 scripts/m365_mail.py list --unread --top 25
 
-# De una carpeta específica
+# From a specific folder
 python3 scripts/m365_mail.py list --folder sent
 ```
 
-### Buscar mensajes
+### Search messages
 
 ```bash
-python3 scripts/m365_mail.py search --query "proyecto presupuesto"
+python3 scripts/m365_mail.py search --query "project budget"
 ```
 
-### Marcar como leído
+### Mark as read
 
 ```bash
-python3 scripts/m365_mail.py mark-read --message-id "<ID_DEL_MENSAJE>"
+python3 scripts/m365_mail.py mark-read --message-id "<MESSAGE_ID>"
 ```
 
-### Enviar correo
+### Send email
 
 ```bash
 python3 scripts/m365_mail.py send \
-  --to "destinatario@empresa.com" \
-  --subject "Reporte mensual" \
-  --body "Adjunto el reporte del mes."
+  --to "recipient@company.com" \
+  --subject "Monthly report" \
+  --body "Please find attached the monthly report."
 ```
 
-### Mover a carpeta
+### Move to folder
 
 ```bash
 python3 scripts/m365_mail.py move \
@@ -99,116 +101,116 @@ python3 scripts/m365_mail.py move \
   --folder archive
 ```
 
-Carpetas disponibles: `inbox`, `drafts`, `sent`, `trash`, `spam`, `archive`
+Available folders: `inbox`, `drafts`, `sent`, `trash`, `spam`, `archive`
 
-### Responder a correo
+### Reply to email
 
 ```bash
 python3 scripts/m365_mail.py reply \
   --message-id "<ID>" \
-  --body "Gracias por tu mensaje..." \
-  --cc "supervisor@empresa.com"
+  --body "Thanks for your message..." \
+  --cc "supervisor@company.com"
 ```
 
-## 🔐 Autenticación y seguridad
+## 🔐 Authentication and security
 
-El skill soporta dos métodos de autenticación:
+The skill supports two authentication methods:
 
-### Opción A: Azure CLI (recomendado)
+### Option A: Azure CLI (recommended)
 
 ```bash
 az login
-# El token se obtiene automáticamente
+# Token is obtained automatically
 ```
 
-### Opción B: Variable de entorno
+### Option B: Environment variable
 
 ```bash
-export GRAPH_ACCESS_TOKEN="tu_token_aqui"
+export GRAPH_ACCESS_TOKEN="your_token_here"
 ```
 
-### Permisos necesarios
+### Required permissions
 
-- `Mail.Read` - Leer correos
-- `Mail.ReadWrite` - Modificar correos (marcar como leído, mover)
-- `Mail.Send` - Enviar correos
+- `Mail.Read` - Read emails
+- `Mail.ReadWrite` - Modify emails (mark as read, move)
+- `Mail.Send` - Send emails
 
-**Importante**: Los tokens duran 1 hora. Nunca los guardes en archivos del repositorio.
+**Important**: Tokens last 1 hour. Never save them in repository files.
 
-## 📁 Estructura del proyecto
+## 📁 Project structure
 
 ```
 m365-email-manager/
-├── SKILL.md                    # Instrucciones para GitHub Copilot
+├── SKILL.md                    # Instructions for GitHub Copilot
 ├── scripts/
-│   ├── m365_mail.py           # Script principal (CLI)
-│   └── test_demo.py           # Demostración sin autenticación
+│   ├── m365_mail.py           # Main script (CLI)
+│   └── test_demo.py           # No-auth demonstration
 └── references/
-    ├── api_reference.md       # Documentación de Graph API
-    └── PERMISSIONS.md         # Guía completa de permisos
+    ├── api_reference.md       # Graph API documentation
+    └── PERMISSIONS.md         # Complete permissions guide
 ```
 
-## 🧪 Demostración sin autenticación
+## 🧪 No-auth demonstration
 
-Para ver el skill en acción sin configurar permisos:
+To see the skill in action without configuring permissions:
 
 ```bash
 python3 scripts/test_demo.py
 ```
 
-Este script simula todas las operaciones con datos de ejemplo.
+This script simulates all operations with sample data.
 
 ## 🛠️ Troubleshooting
 
-### Error: "Debes especificar --user o definir M365_USER"
+### Error: "You must specify --user or set M365_USER"
 
 ```bash
-export M365_USER="tu-usuario@empresa.onmicrosoft.com"
+export M365_USER="your-user@company.onmicrosoft.com"
 ```
 
 ### Error 403: Forbidden
 
-Tu cuenta no tiene permisos para acceder a Graph API. Consulta [references/PERMISSIONS.md](references/PERMISSIONS.md) para configurar permisos con tu administrador.
+Your account doesn't have permissions to access Graph API. See [references/PERMISSIONS.md](references/PERMISSIONS.md) to configure permissions with your administrator.
 
 ### Error: AADSTS65002
 
-El tenant bloquea el acceso de Azure CLI a Graph Mail. Opciones:
-1. Pedir al admin que autorice Azure CLI
-2. Crear un App Registration dedicado
+The tenant blocks Azure CLI access to Graph Mail. Options:
+1. Ask admin to authorize Azure CLI
+2. Create a dedicated App Registration
 
-Ver [references/PERMISSIONS.md](references/PERMISSIONS.md) para instrucciones completas.
+See [references/PERMISSIONS.md](references/PERMISSIONS.md) for complete instructions.
 
-## 📚 Documentación completa
+## 📚 Complete documentation
 
-- [SKILL.md](SKILL.md) - Instrucciones completas del skill
-- [references/api_reference.md](references/api_reference.md) - Detalles de Microsoft Graph API
-- [references/PERMISSIONS.md](references/PERMISSIONS.md) - Configuración de permisos y licencias
+- [SKILL.md](SKILL.md) - Complete skill instructions
+- [references/api_reference.md](references/api_reference.md) - Microsoft Graph API details
+- [references/PERMISSIONS.md](references/PERMISSIONS.md) - Permissions and licenses configuration
 
-## 🤝 Contribuciones
+## 🤝 Contributions
 
-¡Las contribuciones son bienvenidas! Si quieres agregar nuevas operaciones o mejorar la documentación:
+Contributions are welcome! If you want to add new operations or improve documentation:
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-operacion`)
-3. Commit tus cambios (`git commit -m 'Agrega operación X'`)
-4. Push a la rama (`git push origin feature/nueva-operacion`)
-5. Abre un Pull Request
+1. Fork the project
+2. Create a branch for your feature (`git checkout -b feature/new-operation`)
+3. Commit your changes (`git commit -m 'Add operation X'`)
+4. Push to the branch (`git push origin feature/new-operation`)
+5. Open a Pull Request
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está bajo la licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
+This project is under MIT license. See [LICENSE](LICENSE) for more details.
 
-## 🔗 Enlaces útiles
+## 🔗 Useful links
 
 - [Microsoft Graph REST API v1.0](https://learn.microsoft.com/en-us/graph/api/overview)
 - [Mail resource type](https://learn.microsoft.com/en-us/graph/api/resources/message)
 - [Azure CLI documentation](https://learn.microsoft.com/en-us/cli/azure/)
 - [GitHub Copilot Skills](https://github.com/features/copilot)
 
-## ✨ Autor
+## ✨ Author
 
-Creado como ejemplo de GitHub Copilot Skill para automatización de Microsoft 365.
+Created as an example of GitHub Copilot Skill for Microsoft 365 automation.
 
 ---
 
-**Nota**: Este skill NO almacena credenciales ni tokens en el repositorio. Toda la autenticación se realiza mediante Azure CLI o variables de entorno temporales.
+**Note**: This skill does NOT store credentials or tokens in the repository. All authentication is done through Azure CLI or temporary environment variables.
