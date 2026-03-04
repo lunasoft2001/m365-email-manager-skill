@@ -178,13 +178,13 @@ The tenant blocks Azure CLI access to Graph Mail. Options:
 1. Ask admin to authorize Azure CLI
 2. Create a dedicated App Registration
 
-See [references/PERMISSIONS.md](references/PERMISSIONS.md) for complete instructions.
+See [PERMISSIONS.md](PERMISSIONS.md) for complete instructions.
 
 ## 📚 Complete documentation
 
-- [SKILL.md](SKILL.md) - Complete skill instructions
-- [references/api_reference.md](references/api_reference.md) - Microsoft Graph API details
-- [references/PERMISSIONS.md](references/PERMISSIONS.md) - Permissions and licenses configuration
+- [SKILL.md](../SKILL.md) - Complete skill instructions
+- [api_reference.md](api_reference.md) - Microsoft Graph API details
+- [PERMISSIONS.md](PERMISSIONS.md) - Permissions and licenses configuration
 
 ## 🤝 Contributions
 
@@ -198,7 +198,7 @@ Contributions are welcome! If you want to add new operations or improve document
 
 ## 📄 License
 
-This project is under MIT license. See [LICENSE](LICENSE) for more details.
+This project is under MIT license. See [LICENSE](LICENSE.txt) for more details.
 
 ## 🔗 Useful links
 
