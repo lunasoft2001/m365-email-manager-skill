@@ -1,99 +1,249 @@
 ---
 name: m365-email-manager
-description: Manage Microsoft 365 (Outlook/Exchange Online) email using Microsoft Graph. Use when you need to list recent or unread emails, search messages by text, mark messages as read, move emails between folders, reply to or send emails in an automated and repeatable way. Compatible with personal and business accounts.
+description: Manage Microsoft 365 (Outlook/Exchange Online) email using Microsoft Graph. Use when you need to list recent or unread emails, search messages by text, mark messages as read, move emails between folders, reply to or send emails in an automated and repeatable way. Setup once, use forever with tokens stored securely in macOS Keychain.
 ---
 
 # M365 Email Manager
 
 ## Overview
 
-Use this skill to operate Microsoft 365 email with reproducible commands without storing credentials in repository files.
-The main automation lives in `scripts/m365_mail.py`.
+Automate Microsoft 365 email operations with secure, transparent authentication. **Setup once, then execute email operations without repetitive authentication prompts.**
 
-## Quick workflow
+**Key Features:**
+- ✅ Setup once,use forever (tokens stored securely in macOS Keychain)
+- ✅ Auto-detection of credentials from PowerShell Graph
+- ✅ 3 flexible body input methods (CLI, file, stdin)
+- ✅ Transparent token refresh
+- ✅ Production-ready with comprehensive error handling
 
-1. Get Graph token:
-	 - Prefer `GRAPH_ACCESS_TOKEN` if it already exists.
-	 - If not available, use Azure CLI (`az login` then automatic token acquisition in script).
-2. Execute required operation (`list`, `search`, `mark-read`, `send`, `move`, `reply`).
-3. Validate result in console before additional actions.
+## Quick Start (First Time)
 
-## Authentication
+### 1. Run setup (one time only)
+```bash
+python3 scripts/setup.py
+```
+This will:
+- Auto-detect Client ID and Tenant ID from PowerShell (if available)
+- Store configuration in `~/.m365_email_config/config.json`
+- Save refresh token securely in macOS Keychain
+- Optionally set default user email
 
-- Option A: export `GRAPH_ACCESS_TOKEN`.
-- Option B: login with Azure CLI (`az login`), and let the script obtain token with:
-	- `az account get-access-token --resource-type ms-graph --query accessToken -o tsv`
+### 2. Use without further authentication
+```bash
+python3 scripts/m365_mail.py list --top 10
+python3 scripts/m365_mail.py send --to user@company.com --subject "Test" --body "Hi"
+```
 
-## Common tasks
+**That's it!** No more device codes or manual token management.
+
+## Authentication System
+
+The skill uses a three-tier authentication approach:
+
+1. **setup.py** - One-time configuration (~1 minute)
+   - Auto-detects credentials from PowerShell Graph context
+   - Falls back to manual input if needed
+   - Stores refresh token in macOS Keychain (encrypted by OS)
+   
+2. **token_manager.py** - Transparent token refresh
+   - Automatically refreshes access tokens when expired
+   - No user interaction required
+   - Uses OS-level encryption
+   
+3. **m365_mail.py** - Focuses on email operations
+   - Calls token_manager to get valid tokens
+   - Simple CLI interface for all operations
+
+## Common Operations
 
 ### List recent emails
-
 ```bash
 python3 scripts/m365_mail.py list --top 15
-```
-
-### List only unread
-
-```bash
 python3 scripts/m365_mail.py list --unread --top 25
+python3 scripts/m365_mail.py list --user another@company.com --top 10
 ```
 
-### Search by text
-
+### Search emails
 ```bash
 python3 scripts/m365_mail.py search --query "invoice march"
+python3 scripts/m365_mail.py search --query "project update" --top 50
 ```
 
-### Mark email as read
+### Send emails (3 body input options)
 
+**Option 1: Short text (CLI argument)**
+```bash
+python3 scripts/m365_mail.py send \
+  --to "recipient@company.com" \
+  --subject "Quick update" \
+  --body "Hi, just a quick note..."
+```
+
+**Option 2: Long text from file (recommended for multiline)**
+```bash
+python3 scripts/m365_mail.py send \
+  --to "recipient@company.com" \
+  --subject "Detailed proposal" \
+  --body-file email_content.txt
+```
+
+**Option 3: From stdin/pipe**
+```bash
+echo "Email content here" | python3 scripts/m365_mail.py send \
+  --to "recipient@company.com" \
+  --subject "From pipe"
+```
+
+**With CC:**
+```bash
+python3 scripts/m365_mail.py send \
+  --to "person1@company.com" \
+  --cc "person2@company.com, person3@company.com" \
+  --subject "Team update" \
+  --body "Sharing latest progress..."
+```
+
+### Reply to emails
+```bash
+# Short reply
+python3 scripts/m365_mail.py reply \
+  --message-id "<MESSAGE_ID>" \
+  --body "Thanks, reviewed and approved"
+
+# Long reply from file
+python3 scripts/m365_mail.py reply \
+  --message-id "<MESSAGE_ID>" \
+  --body-file response.txt
+
+# Reply with CC
+python3 scripts/m365_mail.py reply \
+  --message-id "<MESSAGE_ID>" \
+  --body "Confirmed" \
+  --cc "manager@company.com"
+```
+
+### Mark as read
 ```bash
 python3 scripts/m365_mail.py mark-read --message-id "<MESSAGE_ID>"
 ```
 
-### Send email
-
-```bash
-python3 scripts/m365_mail.py send \
-	--to "recipient@company.com" \
-	--subject "Follow-up" \
-	--body "Hi, sharing an update..."
-```
-
-### Move email to folder
-
+### Move emails
 ```bash
 python3 scripts/m365_mail.py move \
-	--message-id "<MESSAGE_ID>" \
-	--folder "trash"
+  --message-id "<MESSAGE_ID>" \
+  --folder "archive"
 ```
 
-Available folders: `inbox`, `drafts`, `sent`, `trash`, `spam`, `archive`.
+Available folders: `inbox`, `drafts`, `sent`, `trash`, `spam`, `archive`
 
-### Reply to email
+## Configuration
 
+Configuration is stored in `~/.m365_email_config/config.json`:
+- `client_id` - Azure AD application (client) ID
+- `tenant_id` - Azure AD directory (tenant) ID  
+- `default_user` - Optional default user email
+- `configured` - Setup completion flag
+- `version` - Config version
+
+Refresh token is stored securely in macOS Keychain (never in files).
+
+### Reconfigure
 ```bash
-python3 scripts/m365_mail.py reply \
-	--message-id "<MESSAGE_ID>" \
-	--body "Thanks for your message..."
+python3 scripts/setup.py
+# Prompts to confirm if config already exists
 ```
 
-Optional: add CC with `--cc "email1@company.com, email2@company.com"`
+## Prerequisites
 
-## Account configuration
+- Python 3.9+
+- macOS (uses Keychain for secure storage)
+- Microsoft Entra ID app registration with Mail permissions:
+  - `Mail.Read`
+  - `Mail.ReadWrite`
+  - `Mail.Send`
 
-- Set your account with environment variable: `export M365_USER="your-user@company.onmicrosoft.com"`
-- Or specify user in each command with `--user your-user@company.onmicrosoft.com`
+## Security Best Practices
 
-## Security and limits
-
-- Don't persist tokens in skill files.
-- Review recipients before `send`.
-- Use minimum Graph permissions for the use case.
+- ✅ Tokens stored in encrypted macOS Keychain
+- ✅ Config file has 0o600 permissions (owner-only read/write)
+- ✅ Credentials never in bash history or environment variables
+- ✅ Automatic token refresh (no manual copy/paste)
+- ✅ Device code flow happens only once during setup
 
 ## Resources
 
-- Main script: `scripts/m365_mail.py`
-- No-auth demonstration: `scripts/test_demo.py`
-- API reference: `references/api_reference.md`
-- Permissions and licenses: `references/PERMISSIONS.md` ← Read first if you have configuration questions
+- **Main script**: `scripts/m365_mail.py` - CLI interface
+- **Setup script**: `scripts/setup.py` - One-time configuration
+- **Token manager**: `scripts/token_manager.py` - Transparent auth
+- **Quick start**: `references/QUICKSTART.md` - 3-step guide
+- **Body options**: `references/BODY_OPTIONS.md` - Detailed body input guide
+- **API reference**: `references/api_reference.md` - Graph API details
+- **Permissions**: `references/PERMISSIONS.md` - Azure setup guide
+- **Full README**: `README.md` - Complete documentation
+
+## Troubleshooting
+
+### "Module not found: token_manager"
+Run from scripts directory:
+```bash
+cd scripts/
+python3 m365_mail.py list
+```
+
+### "El archivo no existe" (file not found)
+For `--body-file`, use relative path from scripts directory:
+```bash
+cd scripts/
+python3 m365_mail.py send --to user@co.com --subject "Test" --body-file ../email.txt
+```
+
+### Token expired
+Token manager automatically refreshes. If issues persist:
+```bash
+python3 scripts/setup.py  # Reconfigure
+```
+
+## Example Workflow
+
+After initial setup:
+
+```bash
+# Check emails
+python3 scripts/m365_mail.py list --top 20
+
+# Search
+python3 scripts/m365_mail.py search --query "contract review"
+
+# Send from file
+python3 scripts/m365_mail.py send \
+  --to client@company.com \
+  --subject "Proposal" \
+  --body-file proposal.txt
+
+# Reply
+python3 scripts/m365_mail.py reply \
+  --message-id "AAMkAD..." \
+  --body "Confirmed"
+
+# Archive
+python3 scripts/m365_mail.py move \
+  --message-id "AAMkAD..." \
+  --folder "archive"
+```
+
+All operations work without re-authentication!
+
+## What Changed (v2.0)
+
+**Before:**
+- ❌ Device code prompt on every command
+- ❌ Tokens lost on restart
+- ❌ Only `--body` option (escaping issues)
+- ❌ Manual Client ID/Tenant ID input
+
+**After:**  
+- ✅ Setup once, automatic forever
+- ✅ Tokens in Keychain (persistent)
+- ✅ 3 body options (--body, --body-file, stdin)
+- ✅ Auto-detection from PowerShell
 
