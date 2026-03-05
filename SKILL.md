@@ -1,6 +1,6 @@
 ---
-name: m365-email-manager
-description: Manage Microsoft 365 (Outlook/Exchange Online) email using Microsoft Graph. Use when you need to list recent or unread emails, search messages by text, mark messages as read, move emails between folders, reply to or send emails in an automated and repeatable way. Setup once, use forever with tokens stored securely in macOS Keychain.
+name: m365-email-manager-skill
+description: Manage Microsoft 365 (Outlook/Exchange Online) email using Microsoft Graph. Use when you need to list recent or unread emails, search messages by text, mark messages as read, move emails between folders, reply to or send emails in an automated and repeatable way. Setup once, use forever with tokens stored securely using cross-platform local storage.
 ---
 
 # M365 Email Manager
@@ -10,7 +10,7 @@ description: Manage Microsoft 365 (Outlook/Exchange Online) email using Microsof
 Automate Microsoft 365 email operations with secure, transparent authentication. **Setup once, then execute email operations without repetitive authentication prompts.**
 
 **Key Features:**
-- ✅ Setup once,use forever (tokens stored securely in macOS Keychain)
+- ✅ Setup once,use forever (tokens stored securely in cross-platform storage)
 - ✅ Auto-detection of credentials from PowerShell Graph
 - ✅ 3 flexible body input methods (CLI, file, stdin)
 - ✅ Transparent token refresh
@@ -25,7 +25,7 @@ python3 scripts/setup.py
 This will:
 - Auto-detect Client ID and Tenant ID from PowerShell (if available)
 - Store configuration in `~/.m365_email_config/config.json`
-- Save refresh token securely in macOS Keychain
+- Save refresh token securely (keyring when available, local protected file fallback)
 - Optionally set default user email
 
 ### 2. Use without further authentication
@@ -43,7 +43,7 @@ The skill uses a three-tier authentication approach:
 1. **setup.py** - One-time configuration (~1 minute)
    - Auto-detects credentials from PowerShell Graph context
    - Falls back to manual input if needed
-   - Stores refresh token in macOS Keychain (encrypted by OS)
+  - Stores refresh token in cross-platform secure storage
    
 2. **token_manager.py** - Transparent token refresh
    - Automatically refreshes access tokens when expired
@@ -145,7 +145,7 @@ Configuration is stored in `~/.m365_email_config/config.json`:
 - `configured` - Setup completion flag
 - `version` - Config version
 
-Refresh token is stored securely in macOS Keychain (never in files).
+Refresh token is stored securely using keyring when available, with protected local-file fallback.
 
 ### Reconfigure
 ```bash
@@ -156,7 +156,7 @@ python3 scripts/setup.py
 ## Prerequisites
 
 - Python 3.9+
-- macOS (uses Keychain for secure storage)
+- Windows, Linux or macOS
 - Microsoft Entra ID app registration with Mail permissions:
   - `Mail.Read`
   - `Mail.ReadWrite`
@@ -164,7 +164,7 @@ python3 scripts/setup.py
 
 ## Security Best Practices
 
-- ✅ Tokens stored in encrypted macOS Keychain
+- ✅ Tokens stored in keyring when available (or protected local fallback)
 - ✅ Config file has 0o600 permissions (owner-only read/write)
 - ✅ Credentials never in bash history or environment variables
 - ✅ Automatic token refresh (no manual copy/paste)
@@ -179,7 +179,6 @@ python3 scripts/setup.py
 - **Body options**: `references/BODY_OPTIONS.md` - Detailed body input guide
 - **API reference**: `references/api_reference.md` - Graph API details
 - **Permissions**: `references/PERMISSIONS.md` - Azure setup guide
-- **Full README**: `README.md` - Complete documentation
 
 ## Troubleshooting
 
@@ -230,20 +229,3 @@ python3 scripts/m365_mail.py move \
   --message-id "AAMkAD..." \
   --folder "archive"
 ```
-
-All operations work without re-authentication!
-
-## What Changed (v2.0)
-
-**Before:**
-- ❌ Device code prompt on every command
-- ❌ Tokens lost on restart
-- ❌ Only `--body` option (escaping issues)
-- ❌ Manual Client ID/Tenant ID input
-
-**After:**  
-- ✅ Setup once, automatic forever
-- ✅ Tokens in Keychain (persistent)
-- ✅ 3 body options (--body, --body-file, stdin)
-- ✅ Auto-detection from PowerShell
-

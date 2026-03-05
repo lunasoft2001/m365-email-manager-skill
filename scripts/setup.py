@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Setup inicial para m365-email-manager.
+Setup inicial para m365-email-manager-skill.
 Ejecutar este script UNA SOLA VEZ para configurar la autenticación.
 
-Almacena el refresh token en el keychain de macOS de forma segura.
+Guarda el refresh token de forma multiplataforma (keyring o archivo local protegido).
 """
 
 import json
@@ -14,12 +14,15 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 CONFIG_DIR = os.path.expanduser("~/.m365_email_config")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
+REFRESH_TOKEN_FILE = os.path.join(CONFIG_DIR, "refresh_token.txt")
+SERVICE_NAME = "m365-email-manager-skill"
+LEGACY_SERVICE_NAME = "m365-email-manager"
 
 
 def _ensure_config_dir() -> None:
@@ -38,8 +41,17 @@ def _post_form(url: str, payload: Dict[str, str]) -> Dict[str, Any]:
         return json.loads(raw)
 
 
-def _save_to_keychain(service: str, account: str, password: str) -> None:
-    """Guardar contraseña en el keychain de macOS."""
+def _load_keyring():
+    """Cargar keyring si está disponible en el entorno."""
+    try:
+        import keyring  # type: ignore
+        return keyring
+    except ImportError:
+        return None
+
+
+def _save_to_macos_keychain(service: str, account: str, password: str) -> None:
+    """Guardar contraseña en keychain de macOS (compatibilidad)."""
     cmd = [
         "security",
         "add-generic-password",
@@ -49,21 +61,41 @@ def _save_to_keychain(service: str, account: str, password: str) -> None:
         "-U"
     ]
     subprocess.run(cmd, check=True, capture_output=True)
-    print(f"✓ Guardado en keychain: {service}/{account}")
 
 
-def _get_from_keychain(service: str, account: str) -> Optional[str]:
-    """Recuperar contraseña del keychain de macOS."""
+def _save_refresh_token_to_file(refresh_token: str) -> None:
+    """Guardar refresh token en archivo local con permisos restrictivos."""
+    with open(REFRESH_TOKEN_FILE, "w", encoding="utf-8") as f:
+        f.write(refresh_token)
     try:
-        result = subprocess.run(
-            ["security", "find-generic-password", "-s", service, "-a", account, "-w"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return result.stdout.strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return None
+        os.chmod(REFRESH_TOKEN_FILE, 0o600)
+    except (PermissionError, NotImplementedError):
+        pass
+
+
+def _save_refresh_token(refresh_token: str) -> str:
+    """Guardar refresh token en backend disponible según SO/entorno."""
+    keyring = _load_keyring()
+    if keyring:
+        try:
+            keyring.set_password(SERVICE_NAME, "refresh_token", refresh_token)
+            return "keyring"
+        except Exception as exc:
+            print(f"⚠️  No se pudo guardar en keyring ({exc}). Se usará archivo local.")
+
+    if sys.platform == "darwin":
+        try:
+            _save_to_macos_keychain(SERVICE_NAME, "refresh_token", refresh_token)
+            return "macOS Keychain"
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            try:
+                _save_to_macos_keychain(LEGACY_SERVICE_NAME, "refresh_token", refresh_token)
+                return "macOS Keychain"
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                pass
+
+    _save_refresh_token_to_file(refresh_token)
+    return f"archivo local ({REFRESH_TOKEN_FILE})"
 
 
 def _device_code_flow(client_id: str, tenant_id: str) -> Dict[str, str]:
@@ -162,7 +194,7 @@ def _get_creds_from_powershell() -> tuple:
 def setup() -> None:
     """Ejecutar el setup inicial."""
     print("=" * 60)
-    print("CONFIGURACIÓN INICIAL - m365-email-manager")
+    print("CONFIGURACIÓN INICIAL - m365-email-manager-skill")
     print("=" * 60)
     
     # Verificar si ya está configurado
@@ -233,9 +265,9 @@ def setup() -> None:
         # Ejecutar device code flow manual
         tokens = _device_code_flow(client_id, tenant_id)
     
-    # Guardar en keychain
+    # Guardar refresh token en backend disponible
     _ensure_config_dir()
-    _save_to_keychain("m365-email-manager", "refresh_token", tokens["refresh_token"])
+    storage_backend = _save_refresh_token(tokens["refresh_token"])
     
     # Guardar configuración (sin tokens sensibles)
     config = {
@@ -248,10 +280,13 @@ def setup() -> None:
     
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=2)
-    os.chmod(CONFIG_FILE, 0o600)
+    try:
+        os.chmod(CONFIG_FILE, 0o600)
+    except (PermissionError, NotImplementedError):
+        pass
     
     print(f"\n✓ Configuración guardada en: {CONFIG_FILE}")
-    print("✓ Refresh token guardado en keychain (seguro)")
+    print(f"✓ Refresh token guardado en: {storage_backend}")
     
     if default_user:
         print(f"✓ Cuenta por defecto: {default_user}")

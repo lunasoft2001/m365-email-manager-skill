@@ -138,7 +138,7 @@ export GRAPH_ACCESS_TOKEN="tu_token_aqui"
 ## 📁 Estructura del proyecto
 
 ```
-m365-email-manager/
+m365-email-manager-skill/
 ├── SKILL.md                    # Instrucciones para GitHub Copilot
 ├── scripts/
 │   ├── m365_mail.py           # Script principal (CLI)

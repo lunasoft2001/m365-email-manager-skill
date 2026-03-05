@@ -11,7 +11,7 @@ Te pedirá:
 - **Directory (tenant) ID** (de portal.azure.com)
 - **Email opcional** (tu cuenta M365, por defecto)
 
-El token se guarda automáticamente en el keychain de macOS.
+El token se guarda automáticamente en almacenamiento seguro local (keyring si está disponible).
 
 ---
 
@@ -58,4 +58,4 @@ python3 scripts/m365_mail.py move --message-id "ID" --folder trash
 
 ## Problemas?
 
-Ver el README.md completo para más detalles y troubleshooting.
+Revisa `api_reference.md` y `PERMISSIONS.md` para más detalles y troubleshooting.
